@@ -37,6 +37,8 @@ jobs:
         GCC64_BIN=$GITHUB_WORKSPACE/toolchains/gcc64/bin
         GCC32_BIN=$GITHUB_WORKSPACE/toolchains/gcc32/bin
         export PATH=$CLANG_BIN:$GCC64_BIN:$GCC32_BIN:$PATH
+        rm -rf drivers/kernelsu
+        curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s main
         
         make -j$(nproc --all) O=out \
           ARCH=arm64 \
