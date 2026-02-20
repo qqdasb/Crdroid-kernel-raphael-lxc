@@ -31,7 +31,6 @@ jobs:
         mkdir kernel/out
         cd kernel
         cp ../crdroid-kernel-raphael-lxc-kvm-sukisu/config-sukisu out/.config
-        env ARCH=arm64 scripts/kconfig/merge_config.sh -O out/ out/.config ../crdroid-kernel-raphael-lxc-kvm-sukisu/config-sukisu
 
     - name: Build
       run: |
@@ -41,8 +40,7 @@ jobs:
         GCC32_BIN=$GITHUB_WORKSPACE/toolchains/gcc32/bin
         export PATH=$CLANG_BIN:$GCC64_BIN:$GCC32_BIN:$PATH
         rm -rf drivers/kernelsu
-        curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s main
-        make -j$(nproc --all) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android- LLVM=1 LLVM_IAS=1 olddefconfig
+        curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
         
         make -j$(nproc --all) O=out \
           ARCH=arm64 \
