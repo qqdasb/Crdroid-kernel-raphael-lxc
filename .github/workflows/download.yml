@@ -71,6 +71,30 @@ jobs:
       - name: List downloaded files
         run: ls -la ./downloaded_artifact/
 
+      # 分割大于2GB的文件（GitHub Release 限制为 2GB）
+      - name: Split large files (>2GB)
+        run: |
+          # 查找所有大于2GB的文件（使用字节比较：2GB = 2147483648）
+          large_files=$(find ./downloaded_artifact -type f -size +2147483647c)
+          if [ -n "$large_files" ]; then
+            echo "Found large files exceeding 2GB limit. Splitting them into 1.9GB chunks to be safe."
+            for file in $large_files; do
+              echo "Splitting $file"
+              # 获取文件名和目录
+              dir=$(dirname "$file")
+              base=$(basename "$file")
+              # 使用 split 分割，每个文件最大 1900M（留点余量，避免接近极限）
+              split -b 1900M "$file" "$dir/${base}." -d --additional-suffix=.part
+              # 删除原文件
+              rm -f "$file"
+            done
+          else
+            echo "No files exceed 2GB limit."
+          fi
+
+      - name: List files after split
+        run: ls -la ./downloaded_artifact/
+
       # 上传到当前仓库的 Release
       - name: Upload to Release
         uses: ncipollo/release-action@v1
