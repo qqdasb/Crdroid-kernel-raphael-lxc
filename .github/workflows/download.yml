@@ -28,27 +28,57 @@ jobs:
   download-and-upload:
     runs-on: ubuntu-latest
     steps:
-      # 1. 从其他仓库下载指定的 Artifact
-      - name: Download Artifact from another repo
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          github_token: ${{ secrets.PAT }}          # 需要访问其他仓库的 token
-          repo: ${{ github.event.inputs.target_repo }}
-          workflow: ${{ github.event.inputs.workflow_name }}
-          name: ${{ github.event.inputs.artifact_name }}
-          branch: ${{ github.event.inputs.branch }}
-          run_id: ${{ github.event.inputs.run_id }}
-          path: ./downloaded_artifact                # 下载到当前工作区的子目录
+      # 使用 GitHub CLI 认证（通过 PAT）
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          echo "$GH_TOKEN" | gh auth login --with-token
 
-      # 2. （可选）列出下载的文件，方便调试
+      # 如果没有提供 run_id，则获取指定工作流的最新成功运行 ID
+      - name: Get latest successful run ID
+        id: get_run
+        if: github.event.inputs.run_id == ''
+        env:
+          REPO: ${{ github.event.inputs.target_repo }}
+          WORKFLOW: ${{ github.event.inputs.workflow_name }}
+          BRANCH: ${{ github.event.inputs.branch }}
+        run: |
+          # 构建 API 查询参数
+          BRANCH_ARG=""
+          if [ -n "$BRANCH" ]; then
+            BRANCH_ARG="--branch $BRANCH"
+          fi
+          # 使用 gh run list 列出工作流运行，取第一个成功运行的 ID
+          RUN_ID=$(gh run list --repo "$REPO" --workflow "$WORKFLOW" $BRANCH_ARG --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -z "$RUN_ID" ]; then
+            echo "No successful run found for the given criteria."
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          echo "Found latest run ID: $RUN_ID"
+
+      # 下载 Artifact（使用 run_id）
+      - name: Download Artifact using gh
+        env:
+          REPO: ${{ github.event.inputs.target_repo }}
+          ARTIFACT_NAME: ${{ github.event.inputs.artifact_name }}
+          # 如果提供了 run_id，直接使用；否则使用上一步获取的 ID
+          RUN_ID: ${{ github.event.inputs.run_id || steps.get_run.outputs.run_id }}
+        run: |
+          echo "Downloading artifact '$ARTIFACT_NAME' from run $RUN_ID in repo $REPO"
+          # 创建下载目录
+          mkdir -p ./downloaded_artifact
+          # gh run download 会将 artifact 下载到指定目录（默认解压）
+          gh run download "$RUN_ID" --repo "$REPO" --name "$ARTIFACT_NAME" --dir ./downloaded_artifact
+
       - name: List downloaded files
         run: ls -la ./downloaded_artifact/
 
-      # 3. 将下载的文件上传到当前仓库的 Release
       - name: Upload to Release
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true                          # 允许更新已有的 Release
-          tag: "synced-artifact"                       # Release 的标签，可以自定义
-          artifacts: "./downloaded_artifact/*"         # 上传该目录下的所有文件
-          token: ${{ secrets.GITHUB_TOKEN }}           # 系统自动提供的 token，有权限写入当前仓库
+          allowUpdates: true
+          tag: "synced-artifact"
+          artifacts: "./downloaded_artifact/*"
+          token: ${{ secrets.GITHUB_TOKEN }}
