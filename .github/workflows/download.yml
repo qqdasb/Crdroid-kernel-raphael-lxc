@@ -16,14 +16,10 @@ on:
         description: 'ESD_LTSC_IOT_ENTERPRISE_26100.7840.260206-0415.GE_RELEASE_SVC_PROD1_CLIENT_A64FRE_EN-US'
         required: true
         default: 'ESD_LTSC_IOT_ENTERPRISE_26100.7840.260206-0415.GE_RELEASE_SVC_PROD1_CLIENT_A64FRE_EN-US'
-      branch:
-        description: '目标分支 (默认: main)'
-        required: true
-        default: 'main'
       run_id:
-        description: ''
+        description: '21935596871'
         required: true
-        default: ''
+        default: '21935596871'
 
 permissions:
   contents: write   # 允许当前工作流创建/更新 Release
