@@ -31,7 +31,7 @@ jobs:
         mkdir kernel/out
         cd kernel
         cp ../crdroid-kernel-raphael-lxc/config out/.config
-        git apply -v ../disable-andromeda.patch
+        git apply -v ../crdroid-kernel-raphael-lxc/disable-andromeda.patch
 
     - name: Build
       run: |
