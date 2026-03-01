@@ -58,8 +58,7 @@ jobs:
           STRIP=llvm-strip \
           LD=ld.lld \
           scripts
-        sudo cp scripts/dtc/dtc /usr/bin
-        scripts/dtc/dtc --version
+        export PATH=$PWD/out/scripts/dtc:$CLANG_BIN:$GCC64_BIN:$GCC32_BIN:$PATH
         make -j$(nproc --all) O=out \
           ARCH=arm64 \
           CC=clang \
