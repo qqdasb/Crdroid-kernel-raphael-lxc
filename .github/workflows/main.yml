@@ -41,10 +41,9 @@ jobs:
         CLANG_BIN=$GITHUB_WORKSPACE/toolchains/clang/bin
         GCC64_BIN=$GITHUB_WORKSPACE/toolchains/gcc64/bin
         GCC32_BIN=$GITHUB_WORKSPACE/toolchains/gcc32/bin
-
         export PATH=$CLANG_BIN:$GCC64_BIN:$GCC32_BIN:$PATH
+        
         cd kernel
-        export PATH=$CLANG_BIN:$GCC64_BIN:$GCC32_BIN:$PATH
         make -j$(nproc --all) O=out \
           ARCH=arm64 \
           CC=clang \
