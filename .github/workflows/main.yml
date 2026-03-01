@@ -11,7 +11,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y bc bison build-essential flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses6 libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python3 git-lfs strace
+        sudo apt-get install -y bc bison build-essential flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses6 libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python3 git-lfs
         mkdir -p $GITHUB_WORKSPACE/toolchains
 
     - name: Download Toolchains
@@ -37,7 +37,6 @@ jobs:
         cp ../crdroid-kernel-raphael-lxc/config out/.config
 
     - name: Build
-      continue-on-error: true
       run: |
         CLANG_BIN=$GITHUB_WORKSPACE/toolchains/clang/bin
         GCC64_BIN=$GITHUB_WORKSPACE/toolchains/gcc64/bin
@@ -45,8 +44,7 @@ jobs:
         export PATH=$CLANG_BIN:$GCC64_BIN:$GCC32_BIN:$PATH
         
         cd kernel
-        strace -f -e execve -o /tmp/strace.log \
-        make -j$(nproc --all) O=out \
+        make -s -j$(nproc --all) O=out \
           ARCH=arm64 \
           CC=clang \
           CLANG_TRIPLE=aarch64-linux-gnu- \
@@ -62,19 +60,12 @@ jobs:
           Image.gz-dtb
 
     - name: Pack with AnyKernel
-      continue-on-error: true
       run: |
         git clone --depth 1 https://github.com/qqdasb/AnyKernel3-raphael.git AnyKernel3
         cp kernel/out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
         
         cd AnyKernel3
         zip -r ../Kernel.zip *
-
-    - name: Upload Log
-      uses: actions/upload-artifact@v4
-      with:
-        name: log
-        path: /tmp/strace.log
 
     - name: Upload
       uses: actions/upload-artifact@v4
